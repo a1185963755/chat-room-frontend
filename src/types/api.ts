@@ -40,3 +40,24 @@ export interface ChatroomResponse {
   message: string;
   data: Chatroom[];
 }
+
+export interface ApiError {
+  code: number;
+  message: string;
+}
+
+export interface FriendRequest {
+  id: number;
+  fromUserId: number;
+  toUserId: number;
+  reason: string;
+  status: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FriendRequestResponse {
+  code: number;
+  message: string;
+  data: FriendRequest[];
+}

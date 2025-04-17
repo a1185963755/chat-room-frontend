@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
-import { ChatroomResponse, FriendshipResponse, LoginResponse } from "../types/api";
+import { ApiError, ChatroomResponse, FriendRequestResponse, FriendshipResponse, LoginResponse } from "../types/api";
 
 // 创建axios实例
 const instance: AxiosInstance = axios.create({
@@ -57,6 +57,15 @@ export const userApi = {
 export const friendshipApi = {
   getFriendList: (): Promise<FriendshipResponse> => {
     return instance.get(`/friendship/list`);
+  },
+  sendFriendRequest: ({ friendId, reason }: { friendId: number; reason: string }): Promise<ApiError> => {
+    return instance.post(`/friendship/add`, { friendId, reason });
+  },
+  getFriendRequestList: (): Promise<FriendRequestResponse> => {
+    return instance.get(`/friendship/request_list`);
+  },
+  updateFriendRequest: ({ friendId, status }: { friendId: number; status: number }): Promise<ApiError> => {
+    return instance.post(`/friendship/update`, { friendId, status });
   },
 };
 
