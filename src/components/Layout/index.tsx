@@ -22,7 +22,7 @@ const Layout = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       <header className="h-16 bg-white flex items-center justify-between px-6 ">
         <h1 className="text-xl font-bold">聊天室</h1>
 
@@ -33,7 +33,7 @@ const Layout = () => {
           </div>
         </Dropdown>
       </header>
-      <main className="flex-1">
+      <main className="flex-1 h-full overflow-hidden">
         <Outlet />
       </main>
     </div>

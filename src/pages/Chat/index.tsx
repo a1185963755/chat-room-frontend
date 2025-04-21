@@ -21,11 +21,11 @@ const Chat = () => {
   ];
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full overflow-hidden">
       <div className="w-[200px] bg-white flex flex-col h-full">
         <Menu mode="inline" selectedKeys={[selectedKey]} onClick={handleMenuClick} items={menuItems} className="flex-1 overflow-y-auto" />
       </div>
-      <div className="flex-1 bg-white">
+      <div className="flex-1 bg-white h-full overflow-hidden">
         <Outlet />
       </div>
     </div>
