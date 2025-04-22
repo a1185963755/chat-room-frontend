@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { List, Input, Avatar } from "antd";
 import { UserOutlined, TeamOutlined } from "@ant-design/icons";
 import { getSocket } from "../../../services/socket";
-import { chatroomApi } from "../../../services/api";
+import { chatroomApi, chatHistoryApi } from "../../../services/api";
+import { useLocation } from "react-router-dom";
 
 interface Message {
   id: number;
@@ -14,6 +15,8 @@ interface Message {
   time: string;
   type?: string; // 消息类型，joinRoom表示加入群聊的系统消息
   chatroomId?: number; // 群聊ID
+  content?: string;
+  createdAt?: string;
 }
 
 interface Chatroom {
@@ -29,14 +32,24 @@ const Messages = () => {
   const [selectedGroup, setSelectedGroup] = useState<Chatroom | null>(null);
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const location = useLocation();
+  useEffect(() => {
+    setSelectedGroup(location.state?.chatroomId);
+  }, [location.state?.chatroomId]);
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const response = await chatroomApi.getGroupList();
         setGroupList(response.data);
+
         if (response.data.length > 0) {
-          setSelectedGroup(response.data[0]);
+          if (location.state?.chatRoomId) {
+            const chatRoomId = location.state?.chatRoomId;
+            const foundgroup = response.data.find((group) => group.id === chatRoomId);
+            setSelectedGroup(foundgroup!);
+          } else {
+            setSelectedGroup(response.data[0]);
+          }
         }
       } catch (error) {
         console.error("获取群聊列表失败:", error);
@@ -46,8 +59,12 @@ const Messages = () => {
     fetchGroups();
   }, []);
 
+  // 当selectedGroup变化时，获取聊天历史记录
   useEffect(() => {
     if (!selectedGroup) return;
+
+    // 获取该群聊的历史消息
+    fetchChatHistory(selectedGroup.id);
 
     const socket = getSocket();
     socket.emit("joinRoom", {
@@ -130,6 +147,31 @@ const Messages = () => {
   const handleGroupSelect = (group: Chatroom) => {
     setSelectedGroup(group);
     setMessages([]);
+  };
+
+  // 获取聊天历史记录
+  const fetchChatHistory = async (chatroomId: number) => {
+    try {
+      const response = await chatHistoryApi.getChatHistory(chatroomId);
+      if (response.data && response.data.length > 0) {
+        const transformedMessages = response.data.map((message: Message) => {
+          return {
+            ...message,
+            message: {
+              content: message.content,
+            },
+            time: message.createdAt,
+          };
+        });
+        setMessages(transformedMessages);
+        // 使用requestAnimationFrame确保DOM已更新后滚动到底部
+        requestAnimationFrame(() => {
+          scrollToBottom();
+        });
+      }
+    } catch (error) {
+      console.error("获取聊天记录失败:", error);
+    }
   };
 
   const scrollToBottom = () => {

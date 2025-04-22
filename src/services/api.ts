@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
-import { ApiError, ChatroomResponse, FriendRequestResponse, FriendshipResponse, LoginResponse } from "../types/api";
+import { ApiError, ChatroomResponse, CommonResponse, FriendRequestResponse, FriendshipResponse, LoginResponse } from "../types/api";
 
 // 创建axios实例
 const instance: AxiosInstance = axios.create({
@@ -52,6 +52,9 @@ export const userApi = {
   login: (data: { username: string; password: string }): Promise<LoginResponse> => {
     return instance.post("/user/login", data);
   },
+  searchUsers: (keyword: string): Promise<CommonResponse<any[]>> => {
+    return instance.get(`/user/search`, { params: { keyword } });
+  },
 };
 
 export const friendshipApi = {
@@ -72,6 +75,27 @@ export const friendshipApi = {
 export const chatroomApi = {
   getGroupList: (): Promise<ChatroomResponse> => {
     return instance.get(`/chatroom/list`);
+  },
+  findOneToOneChatroom: ({ userId1, userId2 }: { userId1: number; userId2: number }): Promise<CommonResponse<number>> => {
+    return instance.get(`/chatroom/findOneToOneChatroom`, { params: { userId1, userId2 } });
+  },
+  createOneToOneChatroom: ({ friendId }: { friendId: number }): Promise<CommonResponse<string>> => {
+    return instance.get(`/chatroom/createOneToOneChatroom`, { params: { friendId } });
+  },
+  createGroupChatroom: (name: string): Promise<CommonResponse<any>> => {
+    return instance.get(`/chatroom/create-group`, { params: { name } });
+  },
+  getMembers: (chatroomId: number): Promise<CommonResponse<any[]>> => {
+    return instance.get(`/chatroom/members`, { params: { chatroomId } });
+  },
+  joinChatroom: (chatroomId: number, id: number): Promise<ApiError> => {
+    return instance.get(`/chatroom/join/${id}`, { params: { chatroomId } });
+  },
+};
+
+export const chatHistoryApi = {
+  getChatHistory: (chatroomId: number): Promise<CommonResponse<any[]>> => {
+    return instance.get(`/chat-history/list`, { params: { chatroomId } });
   },
 };
 

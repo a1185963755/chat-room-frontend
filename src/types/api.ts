@@ -1,9 +1,16 @@
+export interface CommonResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}
+
 export interface User {
   id: number;
   username: string;
+  nickname?: string;
   avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginResponse {
@@ -32,7 +39,7 @@ export interface Chatroom {
   name: string;
   type: number;
   membersCount: number;
-  membersIds: number[];
+  members: User[];
 }
 
 export interface ChatroomResponse {

@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button, Avatar, List, Pagination, Modal, Form, Input, message } from "antd";
 import { UserOutlined, PlusOutlined } from "@ant-design/icons";
-import { friendshipApi } from "../../../services/api";
+import { friendshipApi, chatroomApi } from "../../../services/api";
 import { Friendship } from "../../../types/api";
+import { useNavigate } from "react-router-dom";
 
 const Friends = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [messageApi, contextHolder] = message.useMessage();
-
   const [friendList, setFriendList] = useState<Friendship[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,6 +57,36 @@ const Friends = () => {
     setCurrentPage(page);
   };
 
+  const navigate = useNavigate();
+  const gotoChat = async (friendId: number) => {
+    const { id: userId } = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    try {
+      const { data: chatRoomId } =
+        (await chatroomApi.findOneToOneChatroom({
+          userId1: userId,
+          userId2: friendId,
+        })) || {};
+      if (chatRoomId > 0) {
+        navigate(`/chat/3`, {
+          state: {
+            chatRoomId,
+          },
+        });
+      } else {
+        const { data: chatRoomId } =
+          (await chatroomApi.createOneToOneChatroom({
+            friendId,
+          })) || {};
+        navigate(`/chat/3`, {
+          state: {
+            chatRoomId,
+          },
+        });
+      }
+    } catch (error) {
+      messageApi.error("获取聊天室ID失败");
+    }
+  };
   return (
     <div className="p-6 bg-white">
       {contextHolder}
@@ -69,7 +99,7 @@ const Friends = () => {
         loading={loading}
         dataSource={friendList}
         renderItem={(item) => (
-          <List.Item key={item.id} actions={[<a key="list-delete">聊天</a>]}>
+          <List.Item key={item.id} actions={[<a onClick={() => gotoChat(item.id)}>聊天</a>]}>
             <List.Item.Meta avatar={<Avatar icon={<UserOutlined />} />} title={item.nickname || item.username} />
           </List.Item>
         )}
