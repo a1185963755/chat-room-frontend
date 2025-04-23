@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
-import { ApiError, ChatroomResponse, CommonResponse, FriendRequestResponse, FriendshipResponse, LoginResponse } from "../types/api";
+import { ApiError, ChatroomResponse, CommonResponse, FavoriteResponse, FriendRequestResponse, FriendshipResponse, LoginResponse } from "../types/api";
 
 // 创建axios实例
 const instance: AxiosInstance = axios.create({
@@ -28,7 +28,6 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   <T>(response: AxiosResponse<T>) => {
-    console.log("🚀 ~ response:", response);
     return response.data;
   },
   (error) => {
@@ -96,6 +95,18 @@ export const chatroomApi = {
 export const chatHistoryApi = {
   getChatHistory: (chatroomId: number): Promise<CommonResponse<any[]>> => {
     return instance.get(`/chat-history/list`, { params: { chatroomId } });
+  },
+};
+
+export const favoriteApi = {
+  getFavoriteList: (): Promise<FavoriteResponse> => {
+    return instance.get(`/favorite/list`);
+  },
+  deleteFavorite: (id: number): Promise<ApiError> => {
+    return instance.get(`/favorite/del`, { params: { id } });
+  },
+  addFavorite: (chatHistoryId: number): Promise<ApiError> => {
+    return instance.get(`/favorite/add`, { params: { chatHistoryId } });
   },
 };
 

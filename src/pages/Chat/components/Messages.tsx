@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { List, Input, Avatar } from "antd";
-import { UserOutlined, TeamOutlined } from "@ant-design/icons";
+import { List, Input, Avatar, Popover, Button, message } from "antd";
+import { UserOutlined, TeamOutlined, SmileOutlined } from "@ant-design/icons";
 import { getSocket } from "../../../services/socket";
-import { chatroomApi, chatHistoryApi } from "../../../services/api";
+import { chatroomApi, chatHistoryApi, favoriteApi } from "../../../services/api";
 import { useLocation } from "react-router-dom";
-
+import EmojiPicker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
 interface Message {
   id: number;
   message: {
     content: string;
-    type: number;
+    type: number; // 0: 文本消息, 1: 图片消息
   };
   senderId: number;
   time: string;
@@ -26,12 +27,13 @@ interface Chatroom {
 }
 
 const Messages = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [groupList, setGroupList] = useState<Chatroom[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Chatroom | null>(null);
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messageApi, contextHolder] = message.useMessage();
   const location = useLocation();
   useEffect(() => {
     setSelectedGroup(location.state?.chatroomId);
@@ -130,12 +132,16 @@ const Messages = () => {
   const handleSendMessage = () => {
     if (inputValue.trim() && selectedGroup) {
       const socket = getSocket();
+
+      // 检查消息是否包含base64图片数据
+      const isImageMessage = inputValue.includes("data:image");
+
       const newMessage = {
         senderId: userInfo.id,
         chatroomId: selectedGroup.id,
         message: {
           content: inputValue,
-          type: 0,
+          type: isImageMessage ? 1 : 0, // 1: 图片类型, 0: 文本类型
         },
       };
 
@@ -159,6 +165,7 @@ const Messages = () => {
             ...message,
             message: {
               content: message.content,
+              type: message.type, // 确保正确处理图片类型消息
             },
             time: message.createdAt,
           };
@@ -188,8 +195,17 @@ const Messages = () => {
     });
   }, [messages]);
 
+  const handleAddFavorite = async (chatHistoryId: number) => {
+    try {
+      await favoriteApi.addFavorite(chatHistoryId);
+      messageApi.success("收藏成功");
+    } catch (error) {
+      messageApi.error("收藏失败");
+    }
+  };
   return (
     <div className="flex h-full">
+      {contextHolder}
       <div className="w-[240px] border-r border-gray-200 bg-white overflow-y-auto">
         <List
           dataSource={groupList}
@@ -232,8 +248,15 @@ const Messages = () => {
                         className={`px-4 py-2 rounded-lg ${
                           item.senderId === userInfo.id ? "bg-blue-500 text-white rounded-tr-none" : "bg-gray-100 rounded-tl-none"
                         }`}
+                        onDoubleClick={() => handleAddFavorite(item.id)}
                       >
-                        <div className="text-sm">{item.message.content}</div>
+                        {item.message.type === 1 ? (
+                          <div className="text-sm">
+                            <img src={item.message.content} alt="图片消息" className="max-w-full rounded" style={{ maxHeight: "200px" }} />
+                          </div>
+                        ) : (
+                          <div className="text-sm">{item.message.content}</div>
+                        )}
                         <div className="text-xs mt-1">{new Date(item.time).toLocaleTimeString()}</div>
                       </div>
                     </div>
@@ -244,13 +267,32 @@ const Messages = () => {
             />
             <div ref={messagesEndRef} />
           </div>
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onPressEnter={handleSendMessage}
-            placeholder="输入消息..."
-            className="mt-auto"
-          />
+          <div className="flex mt-auto">
+            <Popover
+              content={
+                <EmojiPicker
+                  data={data}
+                  onEmojiSelect={(emoji: any) => {
+                    setInputValue((inputText) => inputText + emoji.native);
+                  }}
+                />
+              }
+              title="表情"
+              trigger="click"
+            >
+              <Button icon={<SmileOutlined />} className="mr-2" />
+            </Popover>
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onPressEnter={handleSendMessage}
+              placeholder="输入消息..."
+              className="flex-1"
+            />
+            <Button type="primary" onClick={handleSendMessage} className="ml-2">
+              发送
+            </Button>
+          </div>
         </div>
       </div>
     </div>

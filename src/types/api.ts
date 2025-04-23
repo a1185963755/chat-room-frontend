@@ -68,3 +68,17 @@ export interface FriendRequestResponse {
   message: string;
   data: FriendRequest[];
 }
+
+export interface Favorite {
+  id: number;
+  userId: number;
+  chatHistoryId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FavoriteResponse {
+  code: number;
+  message: string;
+  data: Favorite[];
+}
